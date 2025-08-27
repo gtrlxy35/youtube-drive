@@ -1,10 +1,18 @@
-import streamlit as st
-from pytube import YouTube
-import os
-import json
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
+iimport yt_dlp
 
+def download_video(url):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegAudioConvertor',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(url, download=True)
+        filename = ydl.prepare_filename(info_dict)
+        return filename
 st.title("🎵 YouTube → Google Drive (Only Vocals)")
 
 # --- Authenticate Google Drive using Secrets ---
@@ -53,5 +61,6 @@ if st.button("Download to Google Drive"):
 
         except Exception as e:
             st.error(f"⚠️ Error: {e}")
+
 
 
