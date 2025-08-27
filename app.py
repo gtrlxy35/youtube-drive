@@ -12,7 +12,29 @@ def authenticate_drive():
 
 drive = authenticate_drive()
 
-st.title("🎵 YouTube → Google Drive (Only Vocals)")
+st.title("🎵 YouTube → Google Drifrom pytube import YouTube
+import os
+
+youtube_url = st.text_input("Paste YouTube Link:")
+
+if st.button("Download to Google Drive"):
+    if not youtube_url.strip():
+        st.warning("⚠️ Please paste a valid YouTube link.")
+    else:
+        st.info("⬇️ Downloading audio...")
+
+        yt = YouTube(youtube_url)
+        stream = yt.streams.filter(only_audio=True).first()
+        mp3_file = stream.download(filename="temp_audio.mp4")
+
+        # Convert mp4 to mp3
+        from moviepy.editor import AudioFileClip
+        audio_clip = AudioFileClip(mp3_file)
+        mp3_file_name = "audio.mp3"
+        audio_clip.write_audiofile(mp3_file_name)
+        audio_clip.close()
+        os.remove(mp3_file)
+ve (Only Vocals)")
 
 youtube_url = st.text_input("Paste YouTube Link:")
 
@@ -62,4 +84,5 @@ if st.button("Download to Google Drive"):
 
             st.success(f"✅ {mp3_file} uploaded to Google Drive → only vocals")
             os.remove(mp3_file)
+
 
