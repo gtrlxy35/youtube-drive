@@ -1,19 +1,27 @@
 import streamlit as st
 from pytube import YouTube
 import os
+import json
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
-# --- Authenticate Google Drive ---
-def authenticate_drive():
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()  # Opens Google login in browser
-    return GoogleDrive(gauth)
-
-drive = authenticate_drive()
-
 st.title("🎵 YouTube → Google Drive (Only Vocals)")
 
+# --- Authenticate Google Drive using Secrets ---
+if "drive" not in st.session_state:
+    creds_json = st.secrets["GOOGLE_CREDENTIALS"]  # Entire JSON content
+    with open("client_secrets.json", "w") as f:
+        f.write(creds_json)
+
+    gauth = GoogleAuth()
+    gauth.LoadClientConfigFile("client_secrets.json")
+    gauth.LocalWebserverAuth()  # Authenticate with Google
+    drive = GoogleDrive(gauth)
+    st.session_state.drive = drive
+
+drive = st.session_state.drive
+
+# --- YouTube URL input ---
 youtube_url = st.text_input("Paste YouTube Link:")
 
 if st.button("Download to Google Drive"):
@@ -22,23 +30,26 @@ if st.button("Download to Google Drive"):
     else:
         st.info("⬇️ Downloading audio...")
 
-        # Download audio with pytube
-        yt = YouTube(youtube_url)
-        stream = yt.streams.filter(only_audio=True).first()
-        temp_file = stream.download(filename="temp_audio.mp4")
+        try:
+            yt = YouTube(youtube_url)
+            stream = yt.streams.filter(only_audio=True).first()
+            temp_file = stream.download(filename="audio.mp4")
 
-        # Rename to mp3 (simple workaround for cloud)
-        mp3_file = "audio.mp3"
-        os.rename(temp_file, mp3_file)
+            # Rename to mp3 (Streamlit Cloud workaround)
+            mp3_file = "audio.mp3"
+            os.rename(temp_file, mp3_file)
 
-        # Upload to Google Drive
-        folder_id = "YOUR_ONLY_VOCALS_FOLDER_ID"
-        gfile = drive.CreateFile({
-            'title': mp3_file,
-            'parents': [{'id': folder_id}]
-        })
-        gfile.SetContentFile(mp3_file)
-        gfile.Upload()
+            # Upload to Google Drive
+            folder_id = st.secrets["DRIVE_FOLDER_ID"]  # Folder ID stored in secrets
+            gfile = drive.CreateFile({
+                'title': mp3_file,
+                'parents': [{'id': folder_id}]
+            })
+            gfile.SetContentFile(mp3_file)
+            gfile.Upload()
 
-        st.success(f"✅ {mp3_file} uploaded to Google Drive → only vocals")
-        os.remove(mp3_file)
+            st.success(f"✅ {mp3_file} uploaded to Google Drive → only vocals")
+            os.remove(mp3_file)
+
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
