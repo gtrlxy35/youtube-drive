@@ -1,8 +1,8 @@
 import streamlit as st
 import yt_dlp
 import os
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 
 # --- Authenticate Google Drive ---
 def authenticate_drive():
@@ -62,3 +62,4 @@ if st.button("Download to Google Drive"):
 
             st.success(f"✅ {mp3_file} uploaded to Google Drive → only vocals")
             os.remove(mp3_file)
+
